@@ -1,7 +1,8 @@
 """Data loading and schema inference."""
 
-import pandas as pd
 from pathlib import Path
+
+import pandas as pd
 
 
 def load_dataset(path: str = "data/pipeline_dataset.parquet") -> pd.DataFrame:
@@ -9,7 +10,7 @@ def load_dataset(path: str = "data/pipeline_dataset.parquet") -> pd.DataFrame:
     filepath = Path(path)
     if not filepath.exists():
         raise FileNotFoundError(f"Dataset not found at {filepath}")
-    
+
     df = pd.read_parquet(filepath)
     print(f"✓ Loaded {len(df):,} rows × {len(df.columns)} columns")
     return df
@@ -22,11 +23,11 @@ def get_schema_summary(df: pd.DataFrame) -> str:
         "",
         "Columns:",
     ]
-    
+
     for col in df.columns:
         dtype = df[col].dtype
         null_pct = df[col].isna().mean() * 100
-        
+
         # Get type-specific info
         if pd.api.types.is_numeric_dtype(df[col]):
             info = f"range [{df[col].min():.2f}, {df[col].max():.2f}]"
@@ -35,9 +36,9 @@ def get_schema_summary(df: pd.DataFrame) -> str:
         else:
             n_unique = df[col].nunique()
             info = f"{n_unique} unique values"
-        
+
         lines.append(f"  - {col} ({dtype}): {info}, {null_pct:.1f}% null")
-    
+
     return "\n".join(lines)
 
 
