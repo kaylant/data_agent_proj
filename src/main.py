@@ -1,4 +1,4 @@
-"""CLI entry point for the agent."""
+"""CLI entry point for the agent"""
 
 from src.agent import build_graph, df
 from src.data_loader import get_schema_summary

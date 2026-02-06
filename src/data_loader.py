@@ -1,4 +1,4 @@
-"""Data loading and schema inference."""
+"""Data loading and schema inference"""
 
 from pathlib import Path
 

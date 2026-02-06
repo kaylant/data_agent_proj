@@ -1,16 +1,9 @@
-"""Tools for the agent to analyze data."""
+"""General pandas code execution tool"""
 
+import numpy as np
 import pandas as pd
 from langchain_core.tools import tool
-
-# Will be set by agent.py
-_df: pd.DataFrame = None
-
-
-def set_dataframe(df: pd.DataFrame):
-    """Set the dataframe for tools to use."""
-    global _df
-    _df = df
+from src.tools._shared import get_dataframe
 
 
 @tool
@@ -30,15 +23,15 @@ def execute_pandas_code(code: str) -> str:
     Returns:
         The result as a string, or an error message.
     """
-    if _df is None:
+    df = get_dataframe()
+    if df is None:
         return "Error: DataFrame not loaded"
 
     try:
-        namespace = {"df": _df, "pd": pd}
+        namespace = {"df": df, "pd": pd, "np": np}
         exec(code, namespace)
         result = namespace.get("result", "No 'result' variable assigned")
 
-        # Format output
         if isinstance(result, pd.DataFrame):
             if len(result) > 20:
                 return f"DataFrame ({len(result)} rows):\n{result.head(20).to_string()}\n..."

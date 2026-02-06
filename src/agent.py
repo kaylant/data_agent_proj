@@ -1,4 +1,4 @@
-"""LangGraph agent with pandas tool."""
+"""LangGraph agent with analysis tools"""
 
 import os
 
@@ -9,7 +9,7 @@ from langchain_openai import ChatOpenAI
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode
 from src.data_loader import get_schema_summary, load_dataset
-from src.tools import execute_pandas_code, set_dataframe
+from src.tools import ALL_TOOLS, set_dataframe
 
 load_dotenv()
 
@@ -18,15 +18,36 @@ df = load_dataset()
 set_dataframe(df)
 SCHEMA_SUMMARY = get_schema_summary(df)
 
-SYSTEM_PROMPT = f"""You are a data analyst for natural gas pipeline data.
+SYSTEM_PROMPT = f"""You are an expert data analyst for natural gas pipeline data.
 
 {SCHEMA_SUMMARY}
 
-Use the execute_pandas_code tool to answer questions. Always assign your result to 'result'.
-Be precise with numbers. Show your methodology.
-"""
+## Guidelines
 
-TOOLS = [execute_pandas_code]
+1. **Always show your work**: Include the methodology, columns used, and any filters applied.
+
+2. **For deterministic queries** (counts, sums, specific values):
+   - Use execute_pandas_code for precise answers
+   - Show the exact numbers
+
+3. **For pattern recognition**:
+   - Use find_correlations, find_patterns, or analyze_time_series
+   - Quantify the strength of patterns found
+   - Note any caveats
+
+4. **For anomaly detection**:
+   - Use detect_outliers with appropriate method (iqr or zscore)
+   - Report count and percentage of outliers
+   - Distinguish true outliers from potential data quality issues
+
+5. **For causal hypotheses**:
+   - Present as hypotheses, NOT facts
+   - Provide supporting evidence
+   - Acknowledge confounders and limitations
+   - Suggest what additional data would help
+
+Be concise but thorough. Start with a direct answer, then show supporting evidence.
+"""
 
 
 def get_llm():
@@ -38,7 +59,7 @@ def get_llm():
     else:
         raise ValueError("No API key found.")
 
-    return llm.bind_tools(TOOLS)
+    return llm.bind_tools(ALL_TOOLS)
 
 
 def agent_node(state: MessagesState):
@@ -62,7 +83,7 @@ def build_graph():
     graph = StateGraph(MessagesState)
 
     graph.add_node("agent", agent_node)
-    graph.add_node("tools", ToolNode(TOOLS))
+    graph.add_node("tools", ToolNode(ALL_TOOLS))
 
     graph.add_edge(START, "agent")
     graph.add_conditional_edges("agent", should_continue, {"tools": "tools", END: END})
