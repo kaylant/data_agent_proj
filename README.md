@@ -22,6 +22,11 @@ uv sync
 ANTHROPIC_API_KEY=your-key-here
 # or
 OPENAI_API_KEY=your-key-here
+
+# Optional: LangSmith tracing
+LANGCHAIN_TRACING_V2=true
+LANGCHAIN_API_KEY=your-langsmith-key
+LANGCHAIN_PROJECT=data-analysis-agent
 ```
 
 2. Place the dataset file at `data/pipeline_dataset.parquet`
@@ -38,6 +43,7 @@ uv run python -m src.main
 | Command | Description |
 |---------|-------------|
 | `/schema` | Show dataset schema |
+| `/clear` | Clear conversation history |
 | `/quit` | Exit the agent |
 
 ## Example Queries & Outputs
@@ -50,6 +56,8 @@ Agent: There are **163 unique pipelines** in the dataset.
 
 This count is based on the `pipeline_name` column, which contains the names 
 of all the different natural gas pipeline systems represented in the data.
+
+[Response time: 3.42s]
 ```
 
 ### Pattern Recognition (Correlations)
@@ -73,6 +81,8 @@ Agent: ## Capacity Column Correlations
   measuring the same thing in this dataset
 - Design capacity represents the theoretical maximum, while operating/operationally 
   available capacity reflects real-world constraints
+
+[Response time: 4.21s]
 ```
 
 ### Anomaly Detection
@@ -88,6 +98,8 @@ The outliers appear to be legitimate extreme values rather than data errors.
 The z-score method identifies only the most extreme cases (like the 389 billion maximum), 
 while the IQR method captures the broader range of unusually high/low scheduled 
 quantities that are still operationally valid but outside typical ranges.
+
+[Response time: 5.67s]
 ```
 
 ### Time Series Analysis
@@ -110,6 +122,8 @@ Agent: ## Time Series Analysis: Total Scheduled Quantity Trends
 **Note**: The extreme growth pattern suggests either significant expansion in 
 pipeline capacity/usage, changes in data collection methodology, or addition 
 of new pipeline systems to the dataset.
+
+[Response time: 8.34s]
 ```
 
 ### Data Quality Analysis
@@ -132,11 +146,46 @@ Agent: ## Data Quality Issues Identified
 - **Negative capacities**: 4,732 records with negative operationally_available_capacity
 - **Logical inconsistencies**: 1.71M records where operating > design capacity
 
-### 4. Extreme Outliers
-- **Total scheduled quantity**: 20.18% outliers (3.36M records)
-
 **Recommendation**: Implement data validation rules, coordinate system verification, 
 and capacity relationship constraints before analysis.
+
+[Response time: 12.45s]
+```
+
+### Multi-turn Conversation
+```
+You: How many unique pipelines are there?
+Agent: There are **163 unique pipelines** in the dataset.
+
+You: Which one has the highest total scheduled quantity?
+Agent: **Kern River** has the highest total scheduled quantity at 19.4 trillion units.
+
+You: Tell me more about that pipeline
+Agent: ## Kern River Pipeline - Comprehensive Analysis
+
+**Overview:**
+- **73,177 records** spanning from April 2023 to December 2025
+- **128 unique locations** across the pipeline system
+- **Primary states:** California (62 locations), Utah (31), Wyoming (18), Nevada (16)
+...
+```
+
+## Testing
+```bash
+# Install dev dependencies
+uv sync
+
+# Run all tests
+uv run pytest -v
+
+# Run unit tests only (fast, no LLM calls)
+uv run pytest tests/test_data_loader.py tests/test_tools.py -v
+
+# Run integration tests only (slower, uses LLM)
+uv run pytest tests/test_agent.py -v
+
+# Skip integration tests
+uv run pytest -v -m "not integration"
 ```
 
 ## Project Structure
@@ -151,9 +200,14 @@ data-analysis-agent/
 │   │   ├── outliers.py      # Outlier detection
 │   │   ├── time_series.py   # Time series analysis
 │   │   └── patterns.py      # Pattern finding
-│   ├── agent.py             # LangGraph agent
+│   ├── agent.py             # LangGraph agent with memory
 │   ├── data_loader.py       # Dataset loading and schema
 │   └── main.py              # CLI entry point
+├── tests/
+│   ├── conftest.py          # Pytest fixtures
+│   ├── test_data_loader.py  # Data loader tests
+│   ├── test_tools.py        # Tool unit tests
+│   └── test_agent.py        # Agent integration tests
 ├── data/                    # Dataset directory (gitignored)
 ├── .env                     # API keys (gitignored)
 ├── .gitignore
@@ -172,12 +226,10 @@ data-analysis-agent/
 | `analyze_time_series` | Trend analysis over time |
 | `find_patterns` | Group-by aggregation patterns |
 
-## Requirements
+## Features
 
-- langchain
-- langchain-anthropic
-- langchain-openai
-- langgraph
-- pandas
-- pyarrow
-- python-dotenv
+- **Multi-turn conversation**: Agent remembers context within a session
+- **Dual LLM support**: Works with Anthropic Claude or OpenAI GPT-4
+- **LangSmith tracing**: Optional observability for debugging
+- **Response timing**: Shows latency for each query
+- **Comprehensive testing**: Unit and integration tests included
