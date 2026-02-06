@@ -8,9 +8,8 @@ from langchain_core.messages import SystemMessage
 from langchain_openai import ChatOpenAI
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode
-
-from data_loader import get_schema_summary, load_dataset
-from tools import execute_pandas_code, set_dataframe
+from src.data_loader import get_schema_summary, load_dataset
+from src.tools import execute_pandas_code, set_dataframe
 
 load_dotenv()
 
