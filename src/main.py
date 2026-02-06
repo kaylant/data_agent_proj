@@ -1,5 +1,7 @@
 """CLI entry point for the agent"""
 
+import time
+
 from src.agent import build_graph, df
 from src.data_loader import get_schema_summary
 
@@ -29,8 +31,12 @@ def main():
                 print(get_schema_summary(df))
                 continue
 
+            start_time = time.time()
             result = app.invoke({"messages": [("user", question)]})
+            elapsed = time.time() - start_time
+
             print(f"\nAgent: {result['messages'][-1].content}")
+            print(f"\n[Response time: {elapsed:.2f}s]")
 
         except KeyboardInterrupt:
             print("\nBye!")
