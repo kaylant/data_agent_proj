@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import SystemMessage
 from langchain_openai import ChatOpenAI
+from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode
 from src.data_loader import get_schema_summary, load_dataset
@@ -51,7 +52,7 @@ Be concise but thorough. Start with a direct answer, then show supporting eviden
 
 
 def get_llm():
-    """Get LLM with tools bound."""
+    """Get LLM with tools bound"""
     if os.getenv("ANTHROPIC_API_KEY"):
         llm = ChatAnthropic(model="claude-sonnet-4-20250514", temperature=0)
     elif os.getenv("OPENAI_API_KEY"):
@@ -63,7 +64,7 @@ def get_llm():
 
 
 def agent_node(state: MessagesState):
-    """Call the LLM."""
+    """Call the LLM"""
     llm = get_llm()
     messages = [SystemMessage(content=SYSTEM_PROMPT)] + state["messages"]
     response = llm.invoke(messages)
@@ -71,7 +72,7 @@ def agent_node(state: MessagesState):
 
 
 def should_continue(state: MessagesState) -> str:
-    """Check if we should continue to tools or end."""
+    """Check if we should continue to tools or end"""
     last_message = state["messages"][-1]
     if last_message.tool_calls:
         return "tools"
@@ -79,7 +80,7 @@ def should_continue(state: MessagesState) -> str:
 
 
 def build_graph():
-    """Build the agent graph."""
+    """Build the agent graph with memory"""
     graph = StateGraph(MessagesState)
 
     graph.add_node("agent", agent_node)
@@ -89,7 +90,9 @@ def build_graph():
     graph.add_conditional_edges("agent", should_continue, {"tools": "tools", END: END})
     graph.add_edge("tools", "agent")
 
-    return graph.compile()
+    # Add memory for conversation persistence
+    memory = MemorySaver()
+    return graph.compile(checkpointer=memory)
 
 
 if __name__ == "__main__":
