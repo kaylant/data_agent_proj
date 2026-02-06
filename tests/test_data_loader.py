@@ -1,6 +1,5 @@
 """Tests for data loader"""
 
-import pandas as pd
 from src.data_loader import get_schema_summary
 
 

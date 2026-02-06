@@ -1,12 +1,11 @@
 """Tests for analysis tools"""
 
-import pandas as pd
 import pytest
 from src.tools import set_dataframe
-from src.tools.pandas_tool import execute_pandas_code
-from src.tools.stats import get_column_stats, find_correlations
 from src.tools.outliers import detect_outliers
+from src.tools.pandas_tool import execute_pandas_code
 from src.tools.patterns import find_patterns
+from src.tools.stats import find_correlations, get_column_stats
 
 
 @pytest.fixture(autouse=True)
