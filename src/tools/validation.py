@@ -1,9 +1,8 @@
 """Validate findings"""
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from langchain_core.tools import tool
-
 from src.tools._shared import get_dataframe
 
 
@@ -32,10 +31,10 @@ def check_confounders(
 
         lines = [
             "## Confounder Analysis",
-            f"",
+            "",
             f"**Relationship:** {feature_column} → {target_column}",
             f"**Potential confounders:** {', '.join(potential_confounders)}",
-            f"",
+            "",
         ]
 
         # Overall correlation
@@ -50,7 +49,7 @@ def check_confounders(
         lines.append("### Stratified Analysis")
 
         for confounder in potential_confounders:
-            lines.append(f"")
+            lines.append("")
             lines.append(f"#### Controlling for: {confounder}")
 
             if pd.api.types.is_numeric_dtype(df[confounder]):
@@ -128,9 +127,9 @@ def robustness_check(metric_column: str, group_column: str, test_type: str = "al
 
         lines = [
             "## Robustness Check",
-            f"",
+            "",
             f"**Finding:** Top {group_column}s by {metric_column}",
-            f"",
+            "",
         ]
 
         # Baseline result

@@ -5,18 +5,32 @@ import pandas as pd
 from langchain_core.tools import tool
 from src.tools._shared import get_dataframe
 
+# Map old frequency aliases to new ones (pandas 2.2+)
+FREQ_MAP = {
+    "M": "ME",  # Month end
+    "Q": "QE",  # Quarter end
+    "Y": "YE",  # Year end
+    "A": "YE",  # Annual (year end)
+    "H": "h",  # Hour
+    "T": "min",  # Minute
+    "S": "s",  # Second
+    "L": "ms",  # Millisecond
+    "U": "us",  # Microsecond
+    "N": "ns",  # Nanosecond
+}
+
 
 @tool
-def analyze_time_series(date_column: str, value_column: str, freq: str = "M") -> str:
-    """Analyze trends over time.
+def analyze_time_series(date_column: str, value_column: str, freq: str = "ME") -> str:
+    """Analyze trends over time
 
     Args:
-        date_column: Name of the date/datetime column.
-        value_column: Name of the numeric column to analyze.
-        freq: Resampling frequency - 'D' (day), 'W' (week), 'M' (month), 'Q' (quarter), 'Y' (year).
+        date_column: Name of the date/datetime column
+        value_column: Name of the numeric column to analyze
+        freq: Resampling frequency - 'D' (day), 'W' (week), 'ME' (month), 'QE' (quarter), 'YE' (year)
 
     Returns:
-        Trend analysis with statistics.
+        Trend analysis with statistics
     """
     df = get_dataframe()
     if df is None:
@@ -28,6 +42,9 @@ def analyze_time_series(date_column: str, value_column: str, freq: str = "M") ->
         return f"Error: Column '{value_column}' not found"
 
     try:
+        # Map old frequency aliases to new ones
+        freq = FREQ_MAP.get(freq, freq)
+
         df_ts = df[[date_column, value_column]].copy()
         df_ts[date_column] = pd.to_datetime(df_ts[date_column], errors="coerce")
         df_ts = df_ts.dropna().set_index(date_column)

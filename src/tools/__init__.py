@@ -13,13 +13,13 @@ def set_dataframe(df: pd.DataFrame):
 
 
 # Import tools AFTER _df is defined
-from src.tools.pandas_tool import execute_pandas_code
-from src.tools.stats import get_column_stats, find_correlations
-from src.tools.outliers import detect_outliers
-from src.tools.time_series import analyze_time_series
-from src.tools.patterns import find_patterns
 from src.tools.clustering import cluster_analysis, find_segments
-from src.tools.data_quality import data_quality_report, compare_with_without_issues
+from src.tools.data_quality import compare_with_without_issues, data_quality_report
+from src.tools.outliers import detect_outliers
+from src.tools.pandas_tool import execute_pandas_code
+from src.tools.patterns import find_patterns
+from src.tools.stats import find_correlations, get_column_stats
+from src.tools.time_series import analyze_time_series
 from src.tools.validation import check_confounders, robustness_check
 
 ALL_TOOLS = [

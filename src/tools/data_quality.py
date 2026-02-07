@@ -1,9 +1,8 @@
 """Data quality tools for detecting issues that affect conclusions"""
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from langchain_core.tools import tool
-
 from src.tools._shared import get_dataframe
 
 
@@ -27,9 +26,9 @@ def data_quality_report(check_all: bool = True) -> str:
 
         lines = [
             "## Data Quality Report",
-            f"",
+            "",
             f"**Dataset:** {len(df):,} rows × {len(df.columns)} columns",
-            f"",
+            "",
         ]
 
         # 1. Missing values analysis
@@ -223,10 +222,10 @@ def compare_with_without_issues(
 
         lines = [
             "## Data Quality Impact Analysis",
-            f"",
+            "",
             f"**Metric:** {metric_column}",
             f"**Aggregation:** {agg_func}",
-            f"",
+            "",
         ]
 
         # Define clean data filters

@@ -1,6 +1,6 @@
 # Data Analysis Agent
 
-A CLI chat agent that answers natural language questions about pipeline data using LangGraph and Anthropic/OpenAPI LLMs.
+A CLI chat agent that answers natural language questions about pipeline data using LangGraph and Anthropic/OpenAI LLMs.
 
 ## Setup
 
@@ -54,9 +54,6 @@ You: How many unique pipelines are in the dataset?
 
 Agent: There are **163 unique pipelines** in the dataset.
 
-This count is based on the `pipeline_name` column, which contains the names 
-of all the different natural gas pipeline systems represented in the data.
-
 [Response time: 3.42s]
 ```
 
@@ -69,18 +66,13 @@ Agent: ## Capacity Column Correlations
 **Key Findings:**
 
 1. **Very Strong Correlation (0.9990)**: `operating_capacity` ↔ `operationally_available_capacity`
-   - Nearly perfect positive correlation
-   - These two measures are almost identical in most cases
-
-2. **Moderate Correlations (~0.62-0.63)**:
-   - `design_capacity` ↔ `operating_capacity`: 0.6259
-   - `design_capacity` ↔ `operationally_available_capacity`: 0.6226
+2. **Moderate Correlations (~0.62-0.63)**: `design_capacity` ↔ `operating_capacity`
 
 **Interpretation:**
 - Operating capacity and operationally available capacity are essentially 
   measuring the same thing in this dataset
-- Design capacity represents the theoretical maximum, while operating/operationally 
-  available capacity reflects real-world constraints
+- Design capacity represents the theoretical maximum, while operating capacity 
+  reflects real-world constraints
 
 [Response time: 4.21s]
 ```
@@ -90,66 +82,114 @@ Agent: ## Capacity Column Correlations
 You: Are there outliers in total_scheduled_quantity?
 
 Agent: **Comparison of Methods:**
-- **IQR method**: 3.36M outliers (20.18%) - more sensitive to the distribution's shape
-- **Z-score method**: 792 outliers (0.005%) - only catches the most extreme values
+- **IQR method**: 3.36M outliers (20.18%)
+- **Z-score method**: 792 outliers (0.005%)
 
 **Conclusion:**
-The outliers appear to be legitimate extreme values rather than data errors. 
-The z-score method identifies only the most extreme cases (like the 389 billion maximum), 
-while the IQR method captures the broader range of unusually high/low scheduled 
-quantities that are still operationally valid but outside typical ranges.
+The outliers appear to be legitimate extreme values rather than data errors.
 
 [Response time: 5.67s]
 ```
 
-### Time Series Analysis
-```
-You: Analyze the time series trend of total_scheduled_quantity by gas_day
-
-Agent: ## Time Series Analysis: Total Scheduled Quantity Trends
-
-**Key Findings:**
-
-### Overall Trend: **Dramatic Increasing Pattern**
-- **Time Period**: April 1, 2023 to December 31, 2025 (1,006 days)
-- **Growth**: 152x increase from first day to last day (15,197% growth)
-
-### Temporal Patterns:
-- **2023 (Baseline Period)**: Started with relatively low volumes
-- **2024 (Growth Phase)**: Significant jump in Q2 2024
-- **2025 (Acceleration Phase)**: Massive volume increases across all quarters
-
-**Note**: The extreme growth pattern suggests either significant expansion in 
-pipeline capacity/usage, changes in data collection methodology, or addition 
-of new pipeline systems to the dataset.
-
-[Response time: 8.34s]
-```
-
 ### Data Quality Analysis
 ```
-You: What data quality issues exist in this dataset?
+You: Run a data quality report
 
-Agent: ## Data Quality Issues Identified
+Agent: ## Data Quality Report Summary
 
-### 1. Missing Data (Systematic Gaps)
-- **Location coordinates**: 11.92% missing (1.99M records)
-- **Design capacity**: 2.57% missing (429K records)
-- **Total scheduled quantity**: 1.73% missing (288K records)
+### **Critical Issues (High Impact)**
+- **7.6% of records** have operating capacity exceeding design capacity
+- **11.9% missing coordinates** - affects any geographic analysis
 
-### 2. Coordinate Data Problems
-- **Invalid latitude values**: 1,418 records outside valid range
-- **Suspicious longitude values**: 3,423 records with positive longitude
+### **Moderate Concerns**
+- **44% of scheduled quantity values are zero**
+- **5.5% of capacity values are zero or placeholder values** (999999999)
 
-### 3. Capacity Data Inconsistencies
-- **Placeholder values**: 999,999,999 appears as likely missing data indicator
-- **Negative capacities**: 4,732 records with negative operationally_available_capacity
-- **Logical inconsistencies**: 1.71M records where operating > design capacity
+### **Recommendations**
+1. For capacity analysis: Exclude rows where operating > design capacity
+2. For volume analysis: Consider whether zero values should be included
+3. For geographic analysis: Use only records with valid coordinates
 
-**Recommendation**: Implement data validation rules, coordinate system verification, 
-and capacity relationship constraints before analysis.
+[Response time: 28.63s]
+```
 
-[Response time: 12.45s]
+### Pipeline Segmentation
+```
+You: Find segments of pipelines by total_scheduled_quantity
+
+Agent: ## Pipeline Segments by Total Scheduled Quantity
+
+**🔴 Top Tier (25% of pipelines - 41 pipelines)**
+- **99.5% of total gas volume** (20.1 trillion units)
+- Examples: Kern River, Transcontinental (Transco)
+
+**🔵 Bottom Tier (25% of pipelines - 41 pipelines)**
+- **<0.1% of total volume** (1 billion units)
+
+### **Key Business Insight**
+Just 41 pipelines (25%) handle virtually all gas transport. 
+Scale disparity: Top tier pipelines move 18,800x more gas than bottom tier.
+
+[Response time: 12.38s]
+```
+
+### Cluster Analysis
+```
+You: Cluster the data using design_capacity, operating_capacity, and total_scheduled_quantity
+
+Agent: ## Cluster Analysis: Pipeline Capacity and Volume Patterns
+
+### **Cluster 0: Standard Operations (99.9% of data)**
+- Normal day-to-day pipeline operations with moderate capacities
+
+### **Cluster 1: High-Capacity Placeholders (6 records)**
+- Likely **data quality issues** - placeholder values (999,999,999)
+
+### **Cluster 2: High-Volume Operations (26 records)**
+- **Major transmission hubs** - high capacity, high utilization
+
+**Recommendation**: Focus analysis on Clusters 0, 2, and 4 while excluding 
+data quality issues in Clusters 1 and 3.
+
+[Response time: 37.50s]
+```
+
+### Confounder Analysis
+```
+You: Check if the relationship between design_capacity and total_scheduled_quantity is confounded by region_nat_gas
+
+Agent: ## Key Finding: Strong Regional Confounding Detected
+
+**Evidence of Confounding:**
+- Overall correlation is near zero (r = 0.0003)
+- **Dramatic variation by region**:
+  - Southeast: Strong positive (r = 0.73)
+  - West: Virtually none (r = 0.003)
+
+**Recommendation**: Always stratify capacity analyses by region, as the 
+relationship varies dramatically across different natural gas regions.
+
+[Response time: 29.76s]
+```
+
+### Robustness Checks
+```
+You: Run robustness checks on the top pipelines by total_scheduled_quantity
+
+Agent: ## Robustness Check Results
+
+### **✅ Passed 3/4 tests**
+- Temporal Consistency: Rankings stable over time
+- Sample Stability: Perfect 5/5 overlap across random samples
+
+### **⚠️ Failed 1/4 tests**  
+- Outlier Sensitivity: Rankings change when extreme values removed
+
+**Conclusion**: The finding that a small number of pipelines dominate gas 
+transport is **robust and reliable**, though exact rankings depend on 
+whether you include peak volume events.
+
+[Response time: 83.46s]
 ```
 
 ### Multi-turn Conversation
@@ -162,12 +202,9 @@ Agent: **Kern River** has the highest total scheduled quantity at 19.4 trillion 
 
 You: Tell me more about that pipeline
 Agent: ## Kern River Pipeline - Comprehensive Analysis
-
-**Overview:**
 - **73,177 records** spanning from April 2023 to December 2025
 - **128 unique locations** across the pipeline system
-- **Primary states:** California (62 locations), Utah (31), Wyoming (18), Nevada (16)
-...
+- **Primary states:** California (62 locations), Utah (31), Wyoming (18)
 ```
 
 ## Testing
@@ -179,7 +216,7 @@ uv sync
 uv run pytest -v
 
 # Run unit tests only (fast, no LLM calls)
-uv run pytest tests/test_data_loader.py tests/test_tools.py -v
+uv run pytest tests/test_data_loader.py tests/test_tools.py tests/test_bonus_tools.py -v
 
 # Run integration tests only (slower, uses LLM)
 uv run pytest tests/test_agent.py -v
@@ -193,23 +230,27 @@ uv run pytest -v -m "not integration"
 data-analysis-agent/
 ├── src/
 │   ├── tools/
-│   │   ├── __init__.py      # Tool exports and shared state
-│   │   ├── _shared.py       # Shared dataframe access
-│   │   ├── pandas_tool.py   # General pandas code execution
-│   │   ├── stats.py         # Column stats and correlations
-│   │   ├── outliers.py      # Outlier detection
-│   │   ├── time_series.py   # Time series analysis
-│   │   └── patterns.py      # Pattern finding
-│   ├── agent.py             # LangGraph agent with memory
-│   ├── data_loader.py       # Dataset loading and schema
-│   └── main.py              # CLI entry point
+│   │   ├── __init__.py       # Tool exports and shared state
+│   │   ├── _shared.py        # Shared dataframe access
+│   │   ├── pandas_tool.py    # General pandas code execution
+│   │   ├── stats.py          # Column stats and correlations
+│   │   ├── outliers.py       # Outlier detection
+│   │   ├── time_series.py    # Time series analysis
+│   │   ├── patterns.py       # Pattern finding
+│   │   ├── clustering.py     # Clustering and segmentation
+│   │   ├── data_quality.py   # Data quality checks
+│   │   └── validation.py     # Robustness and confounder checks
+│   ├── agent.py              # LangGraph agent with memory
+│   ├── data_loader.py        # Dataset loading and schema
+│   └── main.py               # CLI entry point
 ├── tests/
-│   ├── conftest.py          # Pytest fixtures
-│   ├── test_data_loader.py  # Data loader tests
-│   ├── test_tools.py        # Tool unit tests
-│   └── test_agent.py        # Agent integration tests
-├── data/                    # Dataset directory (gitignored)
-├── .env                     # API keys (gitignored)
+│   ├── conftest.py           # Pytest fixtures
+│   ├── test_data_loader.py   # Data loader tests
+│   ├── test_tools.py         # Core tool unit tests
+│   ├── test_bonus_tools.py   # Bonus tool unit tests
+│   └── test_agent.py         # Agent integration tests
+├── data/                     # Dataset directory (gitignored)
+├── .env                      # API keys (gitignored)
 ├── .gitignore
 ├── pyproject.toml
 └── README.md
@@ -225,6 +266,12 @@ data-analysis-agent/
 | `detect_outliers` | IQR or z-score outlier detection |
 | `analyze_time_series` | Trend analysis over time |
 | `find_patterns` | Group-by aggregation patterns |
+| `cluster_analysis` | K-means clustering for non-obvious segments |
+| `find_segments` | Segment entities by metric (quartiles/kmeans) |
+| `data_quality_report` | Comprehensive data quality assessment |
+| `compare_with_without_issues` | Show how data issues affect conclusions |
+| `check_confounders` | Analyze if relationships are confounded |
+| `robustness_check` | Validate findings under different conditions |
 
 ## Features
 
@@ -233,3 +280,4 @@ data-analysis-agent/
 - **LangSmith tracing**: Optional observability for debugging
 - **Response timing**: Shows latency for each query
 - **Comprehensive testing**: Unit and integration tests included
+- **Bonus analytics**: Clustering, segmentation, data quality, confounder analysis, robustness checks
