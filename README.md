@@ -31,7 +31,7 @@ LANGCHAIN_PROJECT=data-analysis-agent
 
 2. Place the dataset file at `data/pipeline_dataset.parquet`
 
-   (The `data/` directory is gitignored and not included in the repo)
+   (The `data/` directory is gitignored and not included in this repo)
 
 ## Usage
 ```bash
@@ -247,7 +247,6 @@ data-analysis-agent/
 │   ├── conftest.py           # Pytest fixtures
 │   ├── test_data_loader.py   # Data loader tests
 │   ├── test_tools.py         # Core tool unit tests
-│   ├── test_bonus_tools.py   # Bonus tool unit tests
 │   └── test_agent.py         # Agent integration tests
 ├── data/                     # Dataset directory (gitignored)
 ├── .env                      # API keys (gitignored)
@@ -280,4 +279,4 @@ data-analysis-agent/
 - **LangSmith tracing**: Optional observability for debugging
 - **Response timing**: Shows latency for each query
 - **Comprehensive testing**: Unit and integration tests included
-- **Bonus analytics**: Clustering, segmentation, data quality, confounder analysis, robustness checks
+- **Analytics validation**: Clustering, segmentation, data quality, confounder analysis, robustness checks
